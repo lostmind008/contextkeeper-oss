@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO Meta Tags -->
+    <title>LostMind AI - ContextKeeper</title>
+    <meta name="description" content="ContextKeeper: Revolutionary AI-Powered Development Context Management by LostMindAI.">
+    <meta name="author" content="LostMindAI">
+
+    <!-- Tailwind CSS & Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* Base styles matching the template */
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #e2e8f0;
+        }
+
+        /* Container for the three.js canvas background */
+        #three-canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+        }
+        
+        /* The main content area that will scroll over the fixed canvas */
+        .main-content {
+            position: relative;
+            z-index: 10;
+            background-color: #0a0a0a;
+        }
+
+        /* The hero section that fills the initial viewport */
+        .hero-section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 10;
+        }
+        
+        /* Custom scrollbar for a modern look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Animation for the loading spinner */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #a78bfa; /* A nice violet color */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        /* Chat Component Styles */
+        .chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .chat-toggle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .chat-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(139, 92, 246, 0.6);
+        }
+
+        .chat-panel {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 400px;
+            height: 600px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-panel.open {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .chat-message {
+            margin-bottom: 16px;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .chat-message.user {
+            text-align: right;
+        }
+
+        .chat-message .message-content {
+            display: inline-block;
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.4;
+        }
+
+        .chat-message.user .message-content {
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-message.assistant .message-content {
+            background: rgba(148, 163, 184, 0.1);
+            color: #e2e8f0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-message .timestamp {
+            display: block;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 0 0 16px 16px;
+        }
+
+        .chat-quick-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-btn {
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #c4b5fd;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-action-btn:hover {
+            background: rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(51, 65, 85, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #e2e8f0;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .chat-input:focus {
+            border-color: #8b5cf6;
+        }
+
+        .chat-send-btn {
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            border: none;
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .chat-send-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .chat-send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 12px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 4px;
+            height: 4px;
+            background: #64748b;
+            border-radius: 50%;
+            animation: typingPulse 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingPulse {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            30% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .chat-panel {
+                width: calc(100vw - 40px);
+                height: 70vh;
+                right: 20px;
+                left: 20px;
+                bottom: 80px;
+            }
+            
+            .chat-container {
+                left: 20px;
+                right: 20px;
+            }
+            
+            .chat-toggle {
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- three.js canvas container -->
+    <div id="three-canvas-container"></div>
+
+    <!-- Hero Section -->
+    <section class="hero-section text-center p-4">
+        <h1 class="text-4xl md:text-6xl font-black text-white leading-tight mb-4">
+            ContextKeeper
+        </h1>
+        <p class="max-w-3xl mx-auto text-lg text-slate-400">
+            Revolutionary AI-Powered Development Context Management.
+        </p>
+        <div class="absolute bottom-8 text-slate-500 animate-bounce">
+            <a href="#dashboard-content" aria-label="Scroll to content">
+                <i class="fas fa-chevron-down text-2xl"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- Main Dashboard Content -->
+    <main id="dashboard-content" class="main-content">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+
+            <!-- Stats Grid -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="statsGrid">
+                <!-- Stat Card Template -->
+                <div class="bg-slate-900/50 p-6 rounded-lg border border-slate-800 text-center transition-all duration-300 hover:border-violet-500 hover:shadow-2xl hover:shadow-violet-500/10">
+                    <div class="text-4xl mb-3 text-violet-400"><i class="fas fa-folder-open"></i></div>
+                    <div class="text-3xl font-bold text-white" id="totalProjects">-</div>
+                    <div class="text-sm font-medium text-slate-400 uppercase tracking-wider">Active Projects</div>
+                </div>
+                <div class="bg-slate-900/50 p-6 rounded-lg border border-slate-800 text-center transition-all duration-300 hover:border-pink-500 hover:shadow-2xl hover:shadow-pink-500/10">
+                    <div class="text-4xl mb-3 text-pink-400"><i class="fas fa-crosshairs"></i></div>
+                    <div class="text-3xl font-bold text-white" id="focusedProject">-</div>
+                    <div class="text-sm font-medium text-slate-400 uppercase tracking-wider">Focused Project</div>
+                </div>
+                <div class="bg-slate-900/50 p-6 rounded-lg border border-slate-800 text-center transition-all duration-300 hover:border-cyan-500 hover:shadow-2xl hover:shadow-cyan-500/10">
+                    <div class="text-4xl mb-3 text-cyan-400"><i class="fas fa-lightbulb"></i></div>
+                    <div class="text-3xl font-bold text-white" id="totalDecisions">-</div>
+                    <div class="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Decisions</div>
+                </div>
+                <div class="bg-slate-900/50 p-6 rounded-lg border border-slate-800 text-center transition-all duration-300 hover:border-green-500 hover:shadow-2xl hover:shadow-green-500/10">
+                    <div class="text-4xl mb-3 text-green-400"><i class="fas fa-heart-pulse"></i></div>
+                    <div class="text-3xl font-bold text-white" id="systemHealth">-</div>
+                    <div class="text-sm font-medium text-slate-400 uppercase tracking-wider">System Health</div>
+                </div>
+            </section>
+
+            <!-- Controls & Search -->
+            <section class="mb-12">
+                <div class="max-w-2xl mx-auto mb-6">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="search" id="globalSearch" class="w-full bg-slate-800 border border-slate-700 text-white rounded-full px-12 py-3 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none" placeholder="Search projects, plans, decisions...">
+                        <div id="searchResults" class="absolute top-full left-0 right-0 bg-slate-800 border border-slate-700 rounded-lg mt-2 z-20 hidden"></div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-4 justify-center">
+                    <button class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-5 rounded-lg inline-flex items-center gap-2 transition-all duration-200 transform hover:scale-105" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button class="bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 px-5 rounded-lg inline-flex items-center gap-2 transition-all duration-200 transform hover:scale-105" onclick="openAnalytics()">
+                        <i class="fas fa-chart-line"></i> Analytics
+                    </button>
+                    <button class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-5 rounded-lg inline-flex items-center gap-2 transition-all duration-200 transform hover:scale-105" onclick="openAPI()">
+                        <i class="fas fa-code"></i> API Docs
+                    </button>
+                    <button class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-5 rounded-lg inline-flex items-center gap-2 transition-all duration-200 transform hover:scale-105" onclick="openGitHub()">
+                        <i class="fab fa-github"></i> GitHub
+                    </button>
+                </div>
+            </section>
+
+            <!-- Projects Section -->
+            <section class="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden mb-8">
+                <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center flex-wrap gap-4">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                        <i class="fas fa-folder"></i> Your Projects
+                    </h2>
+                     <button class="bg-white text-violet-600 font-bold py-2 px-5 rounded-full hover:bg-slate-200 transition-colors transform hover:scale-105 duration-300 inline-flex items-center gap-2 text-sm" onclick="openCreateProjectModal()">
+                        <i class="fas fa-plus"></i> Create New Project
+                    </button>
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="projectsGrid">
+                    <!-- Loading State -->
+                    <div class="loading-state col-span-full text-center py-10 text-slate-400">
+                        <div class="spinner"></div>
+                        <p>Loading projects...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Governance Section -->
+            <section id="governanceSection" class="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden hidden">
+                <div class="px-6 py-4 border-b border-slate-800">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                        <i class="fas fa-shield-alt"></i> Sacred Plans Governance
+                    </h2>
+                </div>
+                <div class="p-6" id="sacredPlansContainer">
+                    <p class="text-slate-400 text-center">Select a project to view its Sacred Plans.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Create Project Modal -->
+    <div id="createProjectModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-lg shadow-2xl p-8 w-full max-w-md m-4">
+            <h3 class="text-2xl font-bold text-white mb-4">Create a New Project</h3>
+            <p class="text-slate-400 mb-6">Enter a name and path for your new project to get started.</p>
+            <div class="space-y-4">
+                <div>
+                    <label for="projectName" class="block text-sm font-medium text-slate-300 mb-2">Project Name</label>
+                    <input type="text" id="projectName" name="projectName" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none" placeholder="e.g., 'My Awesome App'" required>
+                </div>
+                <div>
+                    <label for="projectPath" class="block text-sm font-medium text-slate-300 mb-2">Project Root Path</label>
+                    <input type="text" id="projectPath" name="projectPath" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none" placeholder="e.g., '/Users/myname/projects/my-app'" required>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button type="button" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-5 rounded-lg transition-colors" onclick="closeCreateProjectModal()">
+                    Cancel
+                </button>
+                <button type="button" class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-5 rounded-lg transition-colors" onclick="handleCreateProject()">
+                    Create Project
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sacred Plan Modals -->
+    <div id="viewPlanModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-lg shadow-2xl p-8 w-full max-w-2xl m-4">
+            <h3 class="text-2xl font-bold text-white mb-4" id="viewPlanTitle"></h3>
+            <div class="text-slate-300 bg-slate-800 p-4 rounded-lg max-h-96 overflow-y-auto" id="viewPlanContent"></div>
+            <div class="mt-8 flex justify-end">
+                <button type="button" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-5 rounded-lg transition-colors" onclick="closeViewPlanModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="approvePlanModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-lg shadow-2xl p-8 w-full max-w-md m-4">
+            <h3 class="text-2xl font-bold text-white mb-4">Approve Sacred Plan</h3>
+            <p class="text-slate-400 mb-6">You are about to approve a Sacred Plan. This is a high-security action.</p>
+            <div class="space-y-4">
+                <div>
+                    <label for="approverName" class="block text-sm font-medium text-slate-300 mb-2">Your Name/ID</label>
+                    <input type="text" id="approverName" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-2" placeholder="e.g., 'Chief Architect'">
+                </div>
+                <div>
+                    <label for="verificationCode" class="block text-sm font-medium text-slate-300 mb-2">Verification Code</label>
+                    <input type="text" id="verificationCode" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-2" placeholder="Code from plan file">
+                </div>
+                <div>
+                    <label for="approvalKey" class="block text-sm font-medium text-slate-300 mb-2">Approval Key</label>
+                    <input type="password" id="approvalKey" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-2" placeholder="Enter SACRED_APPROVAL_KEY">
+                    <p class="text-red-400 text-xs mt-2 font-bold"><i class="fas fa-exclamation-triangle"></i> Security Risk: You are entering a secret key into a browser. Ensure you trust this environment.</p>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button type="button" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-5 rounded-lg" onclick="closeApprovePlanModal()">Cancel</button>
+                <button type="button" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-5 rounded-lg" id="confirmApproveButton">Approve</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- three.js and app logic scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lights/RectAreaLightUniformsLib.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    
+    <script>
+        // === DASHBOARD LOGIC ===
+        const API_BASE = window.location.origin;
+        let refreshInterval;
+
+        // Initialize dashboard on content load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard loaded, starting data fetch and WebSocket connection...');
+            loadDashboard();
+            setupWebSocket();
+            // Refresh data every 30 seconds as a fallback
+            refreshInterval = setInterval(loadDashboard, 30000);
+        });
+
+        function setupWebSocket() {
+            const socket = io(API_BASE);
+
+            socket.on('connect', () => {
+                console.log('WebSocket connected!');
+            });
+
+            socket.on('disconnect', () => {
+                console.log('WebSocket disconnected.');
+            });
+
+            socket.on('indexing_progress', (data) => {
+                console.log('Indexing progress:', data);
+                const progressBar = document.getElementById(`progress-bar-${data.project_id}`);
+                const progressText = document.getElementById(`progress-text-${data.project_id}`);
+                if (progressBar) progressBar.style.width = `${data.progress}%`;
+                if (progressText) progressText.textContent = `Indexing... (${data.progress}%)`;
+            });
+
+            socket.on('indexing_complete', (data) => {
+                console.log('Indexing complete:', data);
+                showNotification('Project indexing complete!', 'success');
+                setTimeout(() => loadProjects(), 1000);
+            });
+
+            socket.on('indexing_failed', (data) => {
+                console.error('Indexing failed:', data);
+                showNotification(`Indexing failed for ${data.project_id}: ${data.error}`, 'error');
+                updateProjectCardStatus(data.project_id, `Failed: ${data.error}`, 'error');
+            });
+
+            socket.on('focus_changed', (data) => {
+                console.log('Focus changed:', data);
+                // Highlight the new focused project
+                document.querySelectorAll('.project-card').forEach(card => {
+                    card.classList.remove('ring-2', 'ring-pink-500');
+                });
+                const focusedCard = document.getElementById(`project-card-${data.project_id}`);
+                if (focusedCard) {
+                    focusedCard.classList.add('ring-2', 'ring-pink-500');
+                }
+                // Update stats
+                loadStats();
+            });
+        }
+
+        async function loadDashboard() {
+            try {
+                console.log('Loading dashboard data...');
+                await Promise.all([
+                    loadStats(),
+                    loadProjects()
+                ]);
+                console.log('Dashboard data loaded successfully');
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showError('Failed to load dashboard data: ' + error.message);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                console.log('Loading stats...');
+                // In a real scenario, you might have separate endpoints.
+                // For this example, we derive some stats from the projects endpoint.
+                const [projectsResponse, healthResponse] = await Promise.all([
+                    fetch(`${API_BASE}/projects`).catch(e => ({ ok: false, status: 'Fetch Error', error: e })),
+                    fetch(`${API_BASE}/health`).catch(e => ({ ok: false, status: 'Fetch Error', error: e }))
+                ]);
+
+                if (!projectsResponse.ok) {
+                    // Mock data for demonstration if API fails
+                    console.warn('Projects API failed or is unavailable. Using mock stats.');
+                    updateStatsUI({ total_projects: 3, focused_project: 'ContextKeeper', total_decisions: 12 }, { status: 'healthy' });
+                    return;
+                }
+                 if (!healthResponse.ok) {
+                    console.warn('Health API failed or is unavailable. Using mock health.');
+                    updateStatsUI(await projectsResponse.json(), { status: 'healthy' });
+                    return;
+                }
+
+                const projectsData = await projectsResponse.json();
+                const healthData = await healthResponse.json();
+                console.log('Stats data:', { projectsData, healthData });
+                updateStatsUI(projectsData, healthData);
+
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Display error state in UI
+                document.getElementById('totalProjects').textContent = 'Error';
+                document.getElementById('focusedProject').textContent = 'Error';
+                document.getElementById('totalDecisions').textContent = 'Error';
+                document.getElementById('systemHealth').textContent = '❌';
+            }
+        }
+        
+        function updateStatsUI(projectsData, healthData) {
+            document.getElementById('totalProjects').textContent = projectsData.total_projects || 0;
+            document.getElementById('focusedProject').textContent = projectsData.focused_project ? 'Active' : 'None';
+            document.getElementById('totalDecisions').textContent = projectsData.total_decisions || 0;
+            document.getElementById('systemHealth').textContent = healthData.status === 'healthy' ? '✅ Healthy' : '❌ Unhealthy';
+        }
+
+
+        async function loadProjects() {
+            const projectsGrid = document.getElementById('projectsGrid');
+            try {
+                console.log('Loading projects...');
+                const response = await fetch(`${API_BASE}/projects`);
+                
+                if (!response.ok) {
+                    // Mock data for demonstration if API fails
+                    console.warn(`Projects API error: ${response.status}. Displaying mock projects.`);
+                    const mockData = {
+                        projects: [
+                            { id: 'proj_1', name: 'ContextKeeper v3', status: 'active', last_active: new Date().toISOString(), total_decisions: 12 },
+                            { id: 'proj_2', name: 'AI Core Engine', status: 'active', last_active: new Date(Date.now() - 86400000).toISOString(), total_decisions: 45 },
+                            { id: 'proj_3', name: 'Frontend UI Library', status: 'paused', last_active: new Date(Date.now() - 86400000 * 5).toISOString(), total_decisions: 8 },
+                            { id: 'proj_4', name: 'Legacy API', status: 'archived', last_active: new Date(Date.now() - 86400000 * 30).toISOString(), total_decisions: 150 },
+                        ]
+                    };
+                    renderProjects(mockData);
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('Projects data:', data);
+                renderProjects(data);
+
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                projectsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-10 bg-red-900/20 border border-red-500/30 rounded-lg">
+                        <p class="text-red-300">Error loading projects: ${error.message}</p>
+                        <button class="mt-4 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg" onclick="loadProjects()">Retry</button>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderProjects(data) {
+            const projectsGrid = document.getElementById('projectsGrid');
+            if (data.projects && data.projects.length > 0) {
+                projectsGrid.innerHTML = data.projects.map(project => {
+                    const statusClasses = {
+                        active: 'bg-green-500/20 text-green-300',
+                        paused: 'bg-yellow-500/20 text-yellow-300',
+                        archived: 'bg-slate-600/30 text-slate-400'
+                    };
+                    return `
+                        <div class="project-card bg-slate-800/50 p-5 rounded-lg border border-slate-700 transition-all duration-300 hover:border-violet-500 hover:-translate-y-1 cursor-pointer" onclick="focusProject('${project.id}')">
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="font-bold text-white text-lg">${project.name}</h3>
+                                <span class="text-xs font-medium uppercase tracking-wider px-3 py-1 rounded-full ${statusClasses[project.status] || statusClasses.archived}">
+                                    ${project.status}
+                                </span>
+                            </div>
+                            <div class="text-sm text-slate-400 space-y-1">
+                                <div><i class="fas fa-clock fa-fw mr-2"></i>Last Active: ${formatDate(project.last_active)}</div>
+                                <div><i class="fas fa-lightbulb fa-fw mr-2"></i>Decisions: ${project.total_decisions || 0}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                projectsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-10 text-slate-400">
+                        <i class="fas fa-folder-open text-4xl mb-4"></i>
+                        <p>No projects yet. Create your first one to get started!</p>
+                    </div>
+                `;
+            }
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Never';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-AU', { year: 'numeric', month: 'short', day: 'numeric' });
+            } catch (error) {
+                return 'Invalid Date';
+            }
+        }
+
+        function refreshData() {
+            console.log('Manual refresh triggered');
+            // Add a visual cue for refreshing
+            const refreshButton = document.querySelector('.fa-sync-alt');
+            refreshButton.classList.add('animate-spin');
+            loadDashboard().finally(() => {
+                setTimeout(() => refreshButton.classList.remove('animate-spin'), 500);
+            });
+        }
+
+        async function focusProject(projectId) {
+            console.log('Focusing project:', projectId);
+            try {
+                const response = await fetch(`${API_BASE}/projects/${projectId}/focus`, { method: 'POST' });
+                if (!response.ok) throw new Error('Failed to focus project');
+
+                showNotification(`Project now focused. Loading governance data...`, 'success');
+
+                // Highlight focused project
+                document.querySelectorAll('.project-card').forEach(card => {
+                    card.classList.remove('ring-2', 'ring-pink-500');
+                });
+                document.getElementById(`project-card-${projectId}`).classList.add('ring-2', 'ring-pink-500');
+
+                // Show and load governance section
+                document.getElementById('governanceSection').classList.remove('hidden');
+                await loadSacredPlans(projectId);
+
+            } catch (error) {
+                console.error('Error focusing project:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+
+        async function loadSacredPlans(projectId) {
+            const container = document.getElementById('sacredPlansContainer');
+            container.innerHTML = '<div class="spinner"></div><p class="text-center text-slate-400">Loading Sacred Plans...</p>';
+
+            try {
+                const response = await fetch(`${API_BASE}/sacred/plans?project_id=${projectId}`);
+                if (!response.ok) throw new Error('Failed to load Sacred Plans');
+                const plans = await response.json();
+
+                if (plans.length === 0) {
+                    container.innerHTML = '<p class="text-slate-400 text-center">No Sacred Plans found for this project.</p>';
+                    return;
+                }
+
+                container.innerHTML = plans.map(plan => `
+                    <div class="bg-slate-800 p-4 rounded-lg mb-4 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-white">${plan.title}</h4>
+                            <p class="text-sm text-slate-400">Status: <span class="font-semibold">${plan.status}</span></p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="bg-slate-600 hover:bg-slate-500 text-white text-xs font-bold py-1 px-3 rounded-full" onclick="openViewPlanModal('${plan.plan_id}')">View</button>
+                            ${plan.status === 'draft' ? `<button class="bg-green-600 hover:bg-green-500 text-white text-xs font-bold py-1 px-3 rounded-full" onclick="openApprovePlanModal('${plan.plan_id}')">Approve</button>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                container.innerHTML = `<p class="text-red-400 text-center">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function openViewPlanModal(planId) {
+            const modal = document.getElementById('viewPlanModal');
+            const titleEl = document.getElementById('viewPlanTitle');
+            const contentEl = document.getElementById('viewPlanContent');
+
+            titleEl.textContent = `Plan: ${planId}`;
+            contentEl.innerHTML = '<p class="text-slate-300 animate-pulse">Loading plan content...</p>';
+            modal.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`${API_BASE}/sacred/plans/${planId}`);
+                if (!response.ok) throw new Error(`Failed to load plan (${response.status})`);
+                const plan = await response.json();
+                titleEl.textContent = plan.title || `Plan: ${planId}`;
+                contentEl.textContent = plan.content || 'No content available.';
+            } catch (error) {
+                console.error('Error loading plan:', error);
+                contentEl.innerHTML = `<p class="text-red-400 text-center">Error loading plan: ${error.message}</p>`;
+            }
+        }
+        function closeViewPlanModal() { document.getElementById('viewPlanModal').classList.add('hidden'); }
+
+        function openApprovePlanModal(planId) {
+            document.getElementById('approvePlanModal').classList.remove('hidden');
+            document.getElementById('confirmApproveButton').onclick = () => handleApprovePlan(planId);
+        }
+        function closeApprovePlanModal() { document.getElementById('approvePlanModal').classList.add('hidden'); }
+
+        async function handleApprovePlan(planId) {
+            const approver = document.getElementById('approverName').value;
+            const verificationCode = document.getElementById('verificationCode').value;
+            const approvalKey = document.getElementById('approvalKey').value;
+
+            if (!approver || !verificationCode || !approvalKey) {
+                showNotification('All fields are required for approval.', 'error');
+                return;
+            }
+
+            const approveButton = document.getElementById('confirmApproveButton');
+            approveButton.disabled = true;
+            approveButton.textContent = 'Approving...';
+
+            try {
+                const response = await fetch(`${API_BASE}/sacred/plans/${planId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        approver: approver,
+                        verification_code: verificationCode,
+                        secondary_verification: approvalKey
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Approval failed');
+                }
+
+                showNotification('Plan approved successfully!', 'success');
+                closeApprovePlanModal();
+                // Refresh plans for the currently focused project
+                const focusedProjectId = document.querySelector('.project-card.ring-2').id.replace('project-card-', '');
+                if (focusedProjectId) {
+                    loadSacredPlans(focusedProjectId);
+                }
+
+            } catch (error) {
+                showNotification(`Error: ${error.message}`, 'error');
+            } finally {
+                approveButton.disabled = false;
+                approveButton.textContent = 'Approve';
+            }
+        }
+        
+        function showNotification(message, type = 'success') {
+            const notif = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+            notif.className = `fixed top-5 right-5 ${bgColor} text-white py-2 px-4 rounded-lg shadow-lg z-50 animate-pulse`;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => {
+                notif.remove();
+            }, type === 'error' ? 5000 : 3000); // Show errors longer
+        }
+
+        // Modal Controls
+        function openCreateProjectModal() {
+            document.getElementById('createProjectModal').classList.remove('hidden');
+        }
+
+        function closeCreateProjectModal() {
+            document.getElementById('createProjectModal').classList.add('hidden');
+            clearCreateProjectForm();
+        }
+        
+        function clearCreateProjectForm() {
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectPath').value = '';
+        }
+
+        async function handleCreateProject() {
+            const projectName = document.getElementById('projectName').value.trim();
+            const projectPath = document.getElementById('projectPath').value.trim();
+            
+            if (!projectName || !projectPath) {
+                showNotification('Project name and path are required.', 'error');
+                return;
+            }
+
+            const createButton = document.querySelector('#createProjectModal button[onclick="handleCreateProject()"]');
+            createButton.textContent = 'Creating...';
+            createButton.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/projects/create-and-index`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: projectName, root_path: projectPath })
+                });
+
+                if (response.status !== 202) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to start project creation');
+                }
+
+                const { task_id, project_id } = await response.json();
+                
+                closeCreateProjectModal();
+                showNotification(`Project '${projectName}' created. Indexing started.`, 'success');
+                
+                // Add a placeholder card immediately
+                addProjectPlaceholder(project_id, projectName);
+                
+                // Poll for task status
+                pollTaskStatus(task_id, project_id);
+
+            } catch (error) {
+                console.error('Error creating project:', error);
+                showNotification(`Error: ${error.message}`, 'error');
+            } finally {
+                createButton.textContent = 'Create Project';
+                createButton.disabled = false;
+            }
+        }
+
+        function addProjectPlaceholder(projectId, projectName) {
+            const projectsGrid = document.getElementById('projectsGrid');
+            const placeholderCard = document.createElement('div');
+            placeholderCard.id = `project-card-${projectId}`;
+            placeholderCard.className = 'project-card bg-slate-800/50 p-5 rounded-lg border border-slate-700';
+            placeholderCard.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-bold text-white text-lg">${projectName}</h3>
+                    <span class="text-xs font-medium uppercase tracking-wider px-3 py-1 rounded-full bg-blue-500/20 text-blue-300">
+                        Indexing...
+                    </span>
+                </div>
+                <div class="text-sm text-slate-400 space-y-1">
+                    <div><i class="fas fa-spinner fa-spin fa-fw mr-2"></i>Status: <span id="progress-text-${projectId}">Starting...</span></div>
+                </div>
+                <div class="w-full bg-slate-700 rounded-full h-2.5 mt-4">
+                    <div id="progress-bar-${projectId}" class="bg-blue-400 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+            `;
+            // Prepend to the grid
+            projectsGrid.prepend(placeholderCard);
+        }
+
+        // This function is now replaced by WebSocket events
+        // async function pollTaskStatus(taskId, projectId) { ... }
+
+        function updateProjectCardStatus(projectId, statusText, statusType) {
+            const projectCard = document.getElementById(`project-card-${projectId}`);
+            if (projectCard) {
+                const statusBadge = projectCard.querySelector('span.rounded-full');
+                const statusLine = projectCard.querySelector(`#progress-text-${projectId}`);
+
+                if (statusBadge) {
+                    statusBadge.textContent = statusType === 'error' ? 'Error' : 'Warning';
+                    statusBadge.className = `text-xs font-medium uppercase tracking-wider px-3 py-1 rounded-full ${statusType === 'error' ? 'bg-red-500/20 text-red-300' : 'bg-yellow-500/20 text-yellow-300'}`;
+                }
+                if (statusLine) {
+                    statusLine.textContent = statusText;
+                }
+            }
+        }
+        
+        // External Links
+        function openAnalytics() { window.open(`${API_BASE}/analytics_dashboard_live.html`, '_blank'); }
+        function openAPI() { window.open('https://github.com/lostmind008/contextkeeper-v3', '_blank'); }
+        function openGitHub() { window.open('https://github.com/lostmind008/contextkeeper-v3', '_blank'); }
+
+        // Cleanup and error handling
+        window.addEventListener('beforeunload', () => clearInterval(refreshInterval));
+        window.addEventListener('unhandledrejection', event => console.error('Unhandled promise rejection:', event.reason));
+
+        // Global Search Logic
+        const searchInput = document.getElementById('globalSearch');
+        const searchResultsContainer = document.getElementById('searchResults');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const query = searchInput.value.trim();
+                if (query.length > 2) {
+                    performSearch(query);
+                } else {
+                    searchResultsContainer.classList.add('hidden');
+                }
+            }, 300);
+        });
+
+        async function performSearch(query) {
+            try {
+                const response = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`);
+                if (!response.ok) return;
+                const results = await response.json();
+                renderSearchResults(results);
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        }
+
+        function renderSearchResults(results) {
+            if (!results.projects.length && !results.plans.length && !results.decisions.length) {
+                searchResultsContainer.classList.add('hidden');
+                return;
+            }
+
+            let html = '';
+            if (results.projects.length) {
+                html += '<h4 class="px-4 py-2 text-xs font-bold uppercase text-slate-400">Projects</h4>';
+                html += results.projects.map(p => `<a href="#" onclick="focusProject('${p.id}')" class="block px-4 py-2 hover:bg-slate-700">${p.name}</a>`).join('');
+            }
+            if (results.plans.length) {
+                html += '<h4 class="px-4 py-2 text-xs font-bold uppercase text-slate-400">Sacred Plans</h4>';
+                html += results.plans.map(p => `<a href="#" onclick="openViewPlanModal('${p.plan_id}')" class="block px-4 py-2 hover:bg-slate-700">${p.title}</a>`).join('');
+            }
+            // Decisions would need a dedicated view modal to be useful
+
+            searchResultsContainer.innerHTML = html;
+            searchResultsContainer.classList.remove('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!searchResultsContainer.contains(e.target) && e.target !== searchInput) {
+                searchResultsContainer.classList.add('hidden');
+            }
+        });
+
+
+        // === THREE.JS SCENE SETUP (from template) ===
+        let scene, camera, renderer;
+        let points, group;
+        let mouse = new THREE.Vector2(-100, -100);
+        let raycaster = new THREE.Raycaster();
+        let intersectionPoint = new THREE.Vector3();
+        let isHovering = false;
+
+        const SPHERE_RADIUS = 3.5;
+        const PARTICLE_COUNT = 4000;
+        const HOVER_DISTANCE_EFFECT = 2.5;
+        const DISINTEGRATION_STRENGTH = 0.5;
+
+        function initThreeJS() {
+            const container = document.getElementById('three-canvas-container');
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.set(0, 0, 18);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setAnimationLoop(animate);
+            container.appendChild(renderer.domElement);
+            
+            THREE.RectAreaLightUniformsLib.init();
+            const rectLight1 = new THREE.RectAreaLight(0xff0000, 5, 4, 10);
+            rectLight1.position.set(-5, 5, 5);
+            scene.add(rectLight1);
+            const rectLight2 = new THREE.RectAreaLight(0x00ff00, 5, 4, 10);
+            rectLight2.position.set(0, 5, 5);
+            scene.add(rectLight2);
+            const rectLight3 = new THREE.RectAreaLight(0x0000ff, 5, 4, 10);
+            rectLight3.position.set(5, 5, 5);
+            scene.add(rectLight3);
+
+            group = new THREE.Group();
+            scene.add(group);
+
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+            const initialPositions = [];
+            const colors = [];
+            const colorTop = new THREE.Color(0xffffff);
+            const colorBottom = new THREE.Color(0xFFD700);
+            const phi = Math.PI * (3.0 - Math.sqrt(5.0));
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const y = 1 - (i / (PARTICLE_COUNT - 1)) * 2;
+                const radiusAtY = Math.sqrt(1 - y * y);
+                const theta = phi * i;
+                const x = Math.cos(theta) * radiusAtY * SPHERE_RADIUS;
+                const z = Math.sin(theta) * radiusAtY * SPHERE_RADIUS;
+                const yPos = y * SPHERE_RADIUS;
+                positions.push(x, yPos, z);
+                initialPositions.push(x, yPos, z);
+                const color = new THREE.Color();
+                color.lerpColors(colorBottom, colorTop, (y + 1) / 2);
+                colors.push(color.r, color.g, color.b);
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('initialPosition', new THREE.Float32BufferAttribute(initialPositions, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.05,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.9,
+                blending: THREE.AdditiveBlending,
+            });
+
+            points = new THREE.Points(geometry, material);
+            group.add(points);
+
+            window.addEventListener('resize', onWindowResize, false);
+            document.addEventListener('mousemove', onDocumentMouseMove, false);
+            document.addEventListener('touchstart', onDocumentTouch, { passive: false });
+            document.addEventListener('touchmove', onDocumentTouch, { passive: false });
+            document.addEventListener('touchend', () => { isHovering = false; });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function updateMouseAndRaycaster(clientX, clientY) {
+            mouse.x = (clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const invisibleSphere = new THREE.Mesh(new THREE.SphereGeometry(SPHERE_RADIUS, 32, 32));
+            group.add(invisibleSphere);
+            invisibleSphere.updateMatrixWorld();
+            const intersects = raycaster.intersectObject(invisibleSphere);
+            group.remove(invisibleSphere);
+            if (intersects.length > 0) {
+                intersectionPoint.copy(intersects[0].point).applyMatrix4(group.matrixWorld.clone().invert());
+                isHovering = true;
+            } else {
+                isHovering = false;
+            }
+        }
+
+        function onDocumentMouseMove(event) { updateMouseAndRaycaster(event.clientX, event.clientY); }
+        function onDocumentTouch(event) {
+            if (event.touches.length === 1) {
+                updateMouseAndRaycaster(event.touches[0].clientX, event.touches[0].clientY);
+            }
+        }
+
+        function animate() {
+            group.rotation.y += 0.0005;
+            group.rotation.x += 0.0002;
+            
+            const positions = points.geometry.attributes.position;
+            const initialPositions = points.geometry.attributes.initialPosition;
+            const currentPos = new THREE.Vector3();
+            const initialPos = new THREE.Vector3();
+            const targetPos = new THREE.Vector3();
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                currentPos.fromBufferAttribute(positions, i);
+                initialPos.fromBufferAttribute(initialPositions, i);
+                let targetPosCalculated = false;
+                if (isHovering) {
+                    const dist = initialPos.distanceTo(intersectionPoint);
+                    if (dist < HOVER_DISTANCE_EFFECT) {
+                        const pushFactor = (1 - dist / HOVER_DISTANCE_EFFECT);
+                        targetPos.copy(initialPos).multiplyScalar(1 + pushFactor * DISINTEGRATION_STRENGTH);
+                        targetPosCalculated = true;
+                    }
+                }
+                if (!targetPosCalculated) {
+                    targetPos.copy(initialPos);
+                }
+                currentPos.lerp(targetPos, 0.05);
+                positions.setXYZ(i, currentPos.x, currentPos.y, currentPos.z);
+            }
+            positions.needsUpdate = true;
+            renderer.render(scene, camera);
+        }
+
+        // Start the three.js visualization
+        initThreeJS();
+
+        // === CHAT COMPONENT LOGIC ===
+        let chatHistory = [];
+        let isTyping = false;
+        let focusedProject = null;
+
+        // Initialize chat on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeChat();
+            loadChatHistory();
+        });
+
+        function initializeChat() {
+            // Set up event listeners
+            const chatToggle = document.getElementById('chatToggle');
+            const chatInput = document.getElementById('chatInput');
+            const sendButton = document.getElementById('sendButton');
+            const quickActionBtns = document.querySelectorAll('.quick-action-btn');
+
+            chatToggle.addEventListener('click', toggleChat);
+            sendButton.addEventListener('click', sendMessage);
+            chatInput.addEventListener('keypress', handleKeyPress);
+            chatInput.addEventListener('input', autoResizeTextarea);
+
+            // Quick action buttons
+            quickActionBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const question = btn.dataset.question;
+                    if (question) {
+                        chatInput.value = question;
+                        sendMessage();
+                    }
+                });
+            });
+
+            // Add welcome message if no history
+            if (chatHistory.length === 0) {
+                addWelcomeMessage();
+            }
+        }
+
+        function toggleChat() {
+            const chatPanel = document.getElementById('chatPanel');
+            const chatToggle = document.getElementById('chatToggle');
+            
+            chatPanel.classList.toggle('open');
+            
+            // Update toggle icon
+            const icon = chatToggle.querySelector('i');
+            if (chatPanel.classList.contains('open')) {
+                icon.className = 'fas fa-times';
+                chatInput.focus();
+            } else {
+                icon.className = 'fas fa-comments';
+            }
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function autoResizeTextarea() {
+            const textarea = document.getElementById('chatInput');
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message || isTyping) return;
+
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+            autoResizeTextarea();
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            try {
+                // Prepare the query with context
+                const queryData = {
+                    question: message,
+                    k: 5
+                };
+
+                // Add focused project context if available
+                if (focusedProject) {
+                    queryData.project_id = focusedProject;
+                }
+
+                const response = await fetch(`${API_BASE}/query_llm`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(queryData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API returned ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                // Hide typing indicator
+                hideTypingIndicator();
+
+                // Add assistant response
+                const assistantMessage = data.response || data.answer || 'I apologise, but I couldn\'t generate a proper response. Please try rephrasing your question.';
+                addMessage('assistant', assistantMessage);
+
+            } catch (error) {
+                console.error('Chat error:', error);
+                hideTypingIndicator();
+                
+                // Add error message
+                addMessage('assistant', 'Sorry, I encountered an error while processing your request. Please check that the ContextKeeper service is running and try again.');
+            }
+        }
+
+        function addMessage(role, content) {
+            const message = {
+                id: Date.now(),
+                role: role,
+                content: content,
+                timestamp: new Date().toLocaleString('en-AU', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit'
+                })
+            };
+
+            chatHistory.push(message);
+            renderMessage(message);
+            saveChatHistory();
+            scrollToBottom();
+        }
+
+        function renderMessage(message) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${message.role}`;
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    ${formatMessageContent(message.content)}
+                    <small class="timestamp">${message.timestamp}</small>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+        }
+
+        function formatMessageContent(content) {
+            // Basic markdown-like formatting
+            return content
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code style="background: rgba(139, 92, 246, 0.2); padding: 2px 4px; border-radius: 4px; font-family: monospace;">$1</code>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function showTypingIndicator() {
+            if (isTyping) return;
+            
+            isTyping = true;
+            const messagesContainer = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.className = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <span>ContextKeeper is thinking</span>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            scrollToBottom();
+            
+            // Disable send button
+            document.getElementById('sendButton').disabled = true;
+        }
+
+        function hideTypingIndicator() {
+            isTyping = false;
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+            
+            // Enable send button
+            document.getElementById('sendButton').disabled = false;
+        }
+
+        function scrollToBottom() {
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addWelcomeMessage() {
+            const welcomeMessage = {
+                id: 'welcome',
+                role: 'assistant',
+                content: 'G\'day! I\'m your ContextKeeper AI assistant. I can help you with questions about your projects, decisions, and development context. What would you like to know?',
+                timestamp: new Date().toLocaleString('en-AU', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit'
+                })
+            };
+            
+            chatHistory.push(welcomeMessage);
+            renderMessage(welcomeMessage);
+            saveChatHistory();
+        }
+
+        function loadChatHistory() {
+            try {
+                const saved = localStorage.getItem('contextkeeper_chat_history');
+                if (saved) {
+                    chatHistory = JSON.parse(saved);
+                    chatHistory.forEach(message => renderMessage(message));
+                    scrollToBottom();
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        function saveChatHistory() {
+            try {
+                // Keep only last 50 messages to prevent localStorage bloat
+                const recentHistory = chatHistory.slice(-50);
+                localStorage.setItem('contextkeeper_chat_history', JSON.stringify(recentHistory));
+            } catch (error) {
+                console.error('Error saving chat history:', error);
+            }
+        }
+
+        function clearChatHistory() {
+            chatHistory = [];
+            document.getElementById('chatMessages').innerHTML = '';
+            localStorage.removeItem('contextkeeper_chat_history');
+            addWelcomeMessage();
+        }
+
+        // Update focused project when a project is selected
+        window.originalFocusProject = window.focusProject;
+        window.focusProject = function(projectId) {
+            focusedProject = projectId;
+            console.log('Chat: Focused project updated to:', projectId);
+            
+            // Call original function
+            if (window.originalFocusProject) {
+                window.originalFocusProject(projectId);
+            }
+        };
+    </script>
+
+    <!-- Chat Component -->
+    <div class="chat-container">
+        <div id="chatPanel" class="chat-panel">
+            <div class="chat-header">
+                <h3 class="text-lg font-semibold text-white mb-1">ContextKeeper AI</h3>
+                <p class="text-sm text-slate-400">Ask me about your projects and decisions</p>
+            </div>
+            
+            <div id="chatMessages" class="chat-messages">
+                <!-- Messages will be rendered here -->
+            </div>
+            
+            <div class="chat-input-area">
+                <div class="chat-quick-actions">
+                    <button class="quick-action-btn" data-question="What are my active projects?">
+                        <i class="fas fa-folder-open"></i> Active Projects
+                    </button>
+                    <button class="quick-action-btn" data-question="Show me recent decisions">
+                        <i class="fas fa-lightbulb"></i> Recent Decisions
+                    </button>
+                    <button class="quick-action-btn" data-question="What is the sacred layer?">
+                        <i class="fas fa-shield-alt"></i> Sacred Layer
+                    </button>
+                    <button class="quick-action-btn" onclick="clearChatHistory()">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                </div>
+                
+                <div class="chat-input-container">
+                    <textarea 
+                        id="chatInput" 
+                        class="chat-input" 
+                        placeholder="Ask me anything about your development context..."
+                        rows="1"
+                    ></textarea>
+                    <button id="sendButton" class="chat-send-btn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <button id="chatToggle" class="chat-toggle">
+            <i class="fas fa-comments"></i>
+        </button>
+    </div>
+</body>
+</html>

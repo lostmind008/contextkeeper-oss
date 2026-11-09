@@ -1,0 +1,223 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database files
+rag_knowledge_db/
+.chromadb/
+test_db/
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+rag_agent.log
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Test files
+.coverage
+coverage.txt
+.pytest_cache/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Backup files
+*.backup
+*.bak
+backups/
+rag_agent.py.backup.*
+
+# Temporary directories
+tmp/
+temp/
+.tmp/
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Package files
+# Note: package-lock.json and yarn.lock are NOT ignored
+# They ensure reproducible builds across environments
+
+# Documentation build
+docs/_build/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# ContextKeeper specific
+projects/
+*.json
+!package.json
+!requirements.txt
+!setup.py
+!pyproject.toml
+!tsconfig.json
+!jsconfig.json
+
+# MCP Server specific
+mcp-server/node_modules/
+mcp-server/dist/
+mcp-server/.cache/
+mcp-server/*.log
+
+# Development and debug files
+apply_*.py
+fix_*.py
+test_*.py
+debug_*.py
+run_*.py
+run_*.sh
+*_fix.py
+*_debug.py
+*_test.py
+*.out
+restart_server.sh
+backup_and_fix_tests.sh
+copy_fixed_tests.py
+remove_focused_fallback.py
+simple_fix.py
+immediate_project_fix.py
+direct_fix.py
+final_fix.py
+complete_fix.py
+
+# Temporary directories and files
+.gemini-clipboard/
+PERPLEXITY_RESEARCH_PACKAGE/
+image/
+*.pdf
+*_REPORT.md
+*_PROPOSAL.md
+*_SUMMARY.md
+*_SYNTHESIS.md
+*_BLUEPRINT.md
+*_README.md
+!README.md
+!INSTALLATION_README.md
+!SETUP_README.md
+PR_DESCRIPTION.md
+GITHUB_WORKFLOW_SUMMARY.md
+GEMINI.md
+DEBUG_*.md
+DOCUMENTATION_*.md
+CONTEXTKEEPER_*.md
+!CONTEXTKEEPER_SACRED_LAYER_GUIDE.md
+
+# Coverage reports
+*_coverage.txt
+coverage/
+htmlcov/
+.coverage.*
+
+# Lock files should typically be committed for reproducibility
+# Remove these lines if you want to track lock files
+# package-lock.json
+# yarn.lock
+# Pipfile.lock
+
+# Test fixtures
+test_sample_project/
+
+# Misc
+*.orig
+*.rej
+*.patch
+rag_knowledge_db.old/

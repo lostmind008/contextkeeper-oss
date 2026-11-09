@@ -1,0 +1,31 @@
+{
+  "name": "contextkeeper-enhanced-mcp",
+  "version": "3.0.0",
+  "description": "Enhanced MCP Server for ContextKeeper v3.0 with Sacred Layer Integration",
+  "type": "module",
+  "main": "enhanced_mcp_server.js",
+  "scripts": {
+    "start": "node enhanced_mcp_server.js",
+    "dev": "node --inspect enhanced_mcp_server.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "contextkeeper", 
+    "sacred-layer",
+    "claude-code",
+    "ai-development"
+  ],
+  "author": "ContextKeeper Team",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
